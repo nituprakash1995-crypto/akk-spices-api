@@ -52,7 +52,8 @@ module.exports = async (req, res) => {
       const { error } = await admin.from('retail_orders').insert({
         id,
         order_ref: orderRef,
-        items: computed.lineItems,
+        // delivery is stored as its own line so subtotal - discount + delivery = total_amount
+        items: [...computed.lineItems, { key: 'delivery', product: 'Delivery charge (India Post)', size: computed.parcelWeightG + 'g parcel', price: computed.deliveryCharge, qty: 1, lineTotal: computed.deliveryCharge }],
         subtotal: computed.subtotal,
         discount: computed.discount,
         total_amount: computed.total,

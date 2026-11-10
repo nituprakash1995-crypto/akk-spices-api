@@ -28,6 +28,23 @@ const DISCOUNT_CODE = 'PREBOOK10';
 const DISCOUNT_RATE = 0.10;
 const MAX_QTY_PER_LINE = 500; // sanity cap, not a real business limit
 
+// ---- Weight-based delivery (India Post Parcel Retail, "Other States" column, effective 01.08.2026,
+// + 18% GST, rounded up to the next rupee). One nationwide price per weight slab.
+// Parcel weight = product weight + packing allowance. Weigh a real packed order and adjust the two
+// PACK_* numbers if needed. Must match the same block in checkout.html.
+const PACK_BOX_G = 50;        // outer box / mailer per order
+const PACK_PER_UNIT_G = 10;   // pouch + padding per pack
+const DELIVERY_SLABS = [      // [max grams, charge in rupees incl. GST]
+  [500, 85], [1000, 135], [1500, 202], [2000, 283], [3000, 398], [4000, 496], [5000, 608],
+];
+const DELIVERY_PER_EXTRA_KG = 107; // beyond 5 kg: each extra kg (or part) incl. GST
+
+function deliveryChargeForGrams(g) {
+  if (!(g > 0)) return 0;
+  for (const [max, fee] of DELIVERY_SLABS) if (g <= max) return fee;
+  return 608 + Math.ceil((g - 5000) / 1000) * DELIVERY_PER_EXTRA_KG;
+}
+
 function round2(n) { return Math.round(n * 100) / 100; }
 
 // items: [{ key, qty }] as sent by the browser. Throws on anything invalid
@@ -35,6 +52,7 @@ function round2(n) { return Math.round(n * 100) / 100; }
 function computeRetailOrder(items, couponCode) {
   if (!Array.isArray(items) || items.length === 0) throw new Error('empty_cart');
   let subtotal = 0;
+  let productGrams = 0, units = 0;
   const lineItems = items.map(({ key, qty }) => {
     const p = RETAIL_PRODUCTS[key];
     const q = Number(qty);
@@ -42,13 +60,17 @@ function computeRetailOrder(items, couponCode) {
     if (!Number.isInteger(q) || q <= 0 || q > MAX_QTY_PER_LINE) throw new Error('invalid_qty');
     const lineTotal = round2(p.price * q);
     subtotal += lineTotal;
+    productGrams += parseInt(p.weight, 10) * q;
+    units += q;
     return { key, product: p.name, size: p.weight, price: p.price, qty: q, lineTotal };
   });
   subtotal = round2(subtotal);
   const couponApplied = typeof couponCode === 'string' && couponCode.trim().toUpperCase() === DISCOUNT_CODE;
   const discount = couponApplied ? round2(subtotal * DISCOUNT_RATE) : 0;
-  const total = round2(subtotal - discount);
-  return { lineItems, subtotal, discount, couponApplied, total };
+  const parcelWeightG = productGrams + units * PACK_PER_UNIT_G + PACK_BOX_G;
+  const deliveryCharge = deliveryChargeForGrams(parcelWeightG); // charged after the discount code
+  const total = round2(subtotal - discount + deliveryCharge);
+  return { lineItems, subtotal, discount, couponApplied, deliveryCharge, parcelWeightG, total };
 }
 
 // ---------- Distributor kits (Partner Dashboard) ----------
@@ -133,6 +155,6 @@ function computeKitOrder(kitName) {
 }
 
 module.exports = {
-  RETAIL_PRODUCTS, DISCOUNT_CODE, DISCOUNT_RATE, computeRetailOrder,
+  RETAIL_PRODUCTS, DISCOUNT_CODE, DISCOUNT_RATE, deliveryChargeForGrams, computeRetailOrder,
   DISTRIBUTOR_PRICE, KIT_ITEMS, tierPrice, computeKitOrder,
 };
