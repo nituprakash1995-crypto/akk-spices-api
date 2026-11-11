@@ -24,8 +24,6 @@ const RETAIL_PRODUCTS = {
   dhaniya_500g:  { name: 'Dhaniya Powder',    price: 215, weight: '500g' },
 };
 
-const DISCOUNT_CODE = 'PREBOOK10';
-const DISCOUNT_RATE = 0.10;
 const MAX_QTY_PER_LINE = 500; // sanity cap, not a real business limit
 
 // ---- Weight-based delivery (India Post Parcel Retail, "Other States" column, effective 01.08.2026,
@@ -49,7 +47,7 @@ function round2(n) { return Math.round(n * 100) / 100; }
 
 // items: [{ key, qty }] as sent by the browser. Throws on anything invalid
 // rather than silently clamping, so a bad request fails loudly.
-function computeRetailOrder(items, couponCode) {
+function computeRetailOrder(items) {
   if (!Array.isArray(items) || items.length === 0) throw new Error('empty_cart');
   let subtotal = 0;
   let productGrams = 0, units = 0;
@@ -65,12 +63,11 @@ function computeRetailOrder(items, couponCode) {
     return { key, product: p.name, size: p.weight, price: p.price, qty: q, lineTotal };
   });
   subtotal = round2(subtotal);
-  const couponApplied = typeof couponCode === 'string' && couponCode.trim().toUpperCase() === DISCOUNT_CODE;
-  const discount = couponApplied ? round2(subtotal * DISCOUNT_RATE) : 0;
+  const discount = 0; // no discount codes / offers
   const parcelWeightG = productGrams + units * PACK_PER_UNIT_G + PACK_BOX_G;
-  const deliveryCharge = deliveryChargeForGrams(parcelWeightG); // charged after the discount code
+  const deliveryCharge = deliveryChargeForGrams(parcelWeightG); 
   const total = round2(subtotal - discount + deliveryCharge);
-  return { lineItems, subtotal, discount, couponApplied, deliveryCharge, parcelWeightG, total };
+  return { lineItems, subtotal, discount, deliveryCharge, parcelWeightG, total };
 }
 
 // ---------- Distributor kits (Partner Dashboard) ----------
@@ -155,6 +152,6 @@ function computeKitOrder(kitName) {
 }
 
 module.exports = {
-  RETAIL_PRODUCTS, DISCOUNT_CODE, DISCOUNT_RATE, deliveryChargeForGrams, computeRetailOrder,
+  RETAIL_PRODUCTS, deliveryChargeForGrams, computeRetailOrder,
   DISTRIBUTOR_PRICE, KIT_ITEMS, tierPrice, computeKitOrder,
 };

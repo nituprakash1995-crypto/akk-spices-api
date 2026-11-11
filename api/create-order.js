@@ -12,7 +12,7 @@
 //
 // Needs env vars (Vercel: Settings -> Environment Variables):
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-// If they are missing this returns 503 and the website falls back to a WhatsApp pre-order.
+// If they are missing this returns 503 and the website falls back to a WhatsApp order.
 
 'use strict';
 const crypto = require('crypto');
@@ -41,12 +41,12 @@ module.exports = async (req, res) => {
     const orderRef = makeRef(id);
 
     if (type === 'retail') {
-      const { items, coupon, customer } = req.body || {};
+      const { items, customer } = req.body || {};
       const c = customer || {};
       const name = `${c.fname || ''} ${c.lname || ''}`.trim();
       if (!name || !c.phone) return res.status(400).json({ error: 'missing_customer_details' });
 
-      const computed = computeRetailOrder(items, coupon);
+      const computed = computeRetailOrder(items);
       if (!computed.total || computed.total <= 0) return res.status(400).json({ error: 'invalid_amount' });
 
       const { error } = await admin.from('retail_orders').insert({
