@@ -11,6 +11,7 @@
 'use strict';
 const crypto = require('crypto');
 const { getSupabaseAdmin } = require('./_supabase-admin');
+const SIGNATURE = require('./_signature');
 
 const ALLOWED_ORIGINS = ['https://akkspices.in', 'https://www.akkspices.in'];
 
@@ -51,7 +52,7 @@ module.exports = async (req, res) => {
       .order('created_at', { ascending: false })
       .limit(300);
     if (error) throw error;
-    return res.status(200).json({ orders: data || [] });
+    return res.status(200).json({ orders: data || [], signature: SIGNATURE });
   } catch (err) {
     console.error('admin-orders error:', err);
     return res.status(500).json({ error: 'Failed to load orders' });
