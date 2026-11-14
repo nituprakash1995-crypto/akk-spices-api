@@ -73,64 +73,63 @@ function computeRetailOrder(items) {
 // ---------- Distributor kits (Partner Dashboard) ----------
 // Mirrors partner/partner-config.js DISTRIBUTOR_PRICE + KITS exactly.
 const DISTRIBUTOR_PRICE = {
-  'Turmeric Powder':   { '20g': 7.00, '50g': 15.40, '100g': 33.60, '200g': 61.75, '500g': 152.75 },
-  'Red Chilli Powder': { '20g': 7.00, '50g': 17.50, '100g': 47.60, '200g': 87.75, '500g': 180.70 },
-  'Dhaniya Powder':    { '20g': 7.00, '50g': 15.40, '100g': 32.20, '200g': 58.50, '500g': 139.75 },
+  'Turmeric Powder':   { '50g': 15.40, '100g': 33.60, '200g': 61.75, '500g': 152.75 },
+  'Red Chilli Powder': { '50g': 17.50, '100g': 47.60, '200g': 87.75, '500g': 180.70 },
+  'Dhaniya Powder':    { '50g': 15.40, '100g': 32.20, '200g': 58.50, '500g': 139.75 },
+  'Ladi Pouch Pack':   { '3 ladi (450g)': 210.00 },   // 3 ladi x 10 pouch x 15g, Rs7 per pouch
 };
 
 const KIT_ITEMS = {
   'Starter Kit': [
-    { product: 'Turmeric Powder',   size: '20g',  qty: 242 },
-    { product: 'Turmeric Powder',   size: '50g',  qty: 105 },
-    { product: 'Turmeric Powder',   size: '100g', qty: 47 },
-    { product: 'Turmeric Powder',   size: '200g', qty: 23 },
-    { product: 'Turmeric Powder',   size: '500g', qty: 11 },
-    { product: 'Red Chilli Powder', size: '20g',  qty: 242 },
-    { product: 'Red Chilli Powder', size: '50g',  qty: 92 },
-    { product: 'Red Chilli Powder', size: '100g', qty: 35 },
-    { product: 'Red Chilli Powder', size: '200g', qty: 12 },
-    { product: 'Red Chilli Powder', size: '500g', qty: 11 },
-    { product: 'Dhaniya Powder',    size: '20g',  qty: 242 },
-    { product: 'Dhaniya Powder',    size: '50g',  qty: 115 },
-    { product: 'Dhaniya Powder',    size: '100g', qty: 58 },
-    { product: 'Dhaniya Powder',    size: '200g', qty: 34 },
-    { product: 'Dhaniya Powder',    size: '500g', qty: 12 },
+    { product: 'Turmeric Powder', size: '50g', qty: 160 },
+    { product: 'Turmeric Powder', size: '100g', qty: 20 },
+    { product: 'Turmeric Powder', size: '200g', qty: 10 },
+    { product: 'Turmeric Powder', size: '500g', qty: 12 },
+    { product: 'Red Chilli Powder', size: '50g', qty: 40 },
+    { product: 'Red Chilli Powder', size: '100g', qty: 40 },
+    { product: 'Red Chilli Powder', size: '200g', qty: 10 },
+    { product: 'Red Chilli Powder', size: '500g', qty: 20 },
+    { product: 'Dhaniya Powder', size: '50g', qty: 120 },
+    { product: 'Dhaniya Powder', size: '100g', qty: 60 },
+    { product: 'Dhaniya Powder', size: '200g', qty: 20 },
+    { product: 'Dhaniya Powder', size: '500g', qty: 8 },
+    { product: 'Ladi Pouch Pack', size: '3 ladi (450g)', qty: 25 },
   ],
   'Growth Kit': [
-    { product: 'Turmeric Powder',   size: '20g',  qty: 484 },
-    { product: 'Turmeric Powder',   size: '50g',  qty: 210 },
-    { product: 'Turmeric Powder',   size: '100g', qty: 94 },
-    { product: 'Turmeric Powder',   size: '200g', qty: 46 },
-    { product: 'Turmeric Powder',   size: '500g', qty: 22 },
-    { product: 'Red Chilli Powder', size: '20g',  qty: 484 },
-    { product: 'Red Chilli Powder', size: '50g',  qty: 184 },
-    { product: 'Red Chilli Powder', size: '100g', qty: 70 },
-    { product: 'Red Chilli Powder', size: '200g', qty: 24 },
-    { product: 'Red Chilli Powder', size: '500g', qty: 22 },
-    { product: 'Dhaniya Powder',    size: '20g',  qty: 484 },
-    { product: 'Dhaniya Powder',    size: '50g',  qty: 230 },
-    { product: 'Dhaniya Powder',    size: '100g', qty: 116 },
-    { product: 'Dhaniya Powder',    size: '200g', qty: 68 },
-    { product: 'Dhaniya Powder',    size: '500g', qty: 24 },
+    { product: 'Turmeric Powder', size: '50g', qty: 320 },
+    { product: 'Turmeric Powder', size: '100g', qty: 40 },
+    { product: 'Turmeric Powder', size: '200g', qty: 20 },
+    { product: 'Turmeric Powder', size: '500g', qty: 24 },
+    { product: 'Red Chilli Powder', size: '50g', qty: 80 },
+    { product: 'Red Chilli Powder', size: '100g', qty: 80 },
+    { product: 'Red Chilli Powder', size: '200g', qty: 20 },
+    { product: 'Red Chilli Powder', size: '500g', qty: 40 },
+    { product: 'Dhaniya Powder', size: '50g', qty: 240 },
+    { product: 'Dhaniya Powder', size: '100g', qty: 120 },
+    { product: 'Dhaniya Powder', size: '200g', qty: 40 },
+    { product: 'Dhaniya Powder', size: '500g', qty: 16 },
+    { product: 'Ladi Pouch Pack', size: '3 ladi (450g)', qty: 50 },
   ],
   'Business Kit': [
-    { product: 'Turmeric Powder',   size: '20g',  qty: 968 },
-    { product: 'Turmeric Powder',   size: '50g',  qty: 420 },
-    { product: 'Turmeric Powder',   size: '100g', qty: 188 },
-    { product: 'Turmeric Powder',   size: '200g', qty: 92 },
-    { product: 'Turmeric Powder',   size: '500g', qty: 44 },
-    { product: 'Red Chilli Powder', size: '20g',  qty: 968 },
-    { product: 'Red Chilli Powder', size: '50g',  qty: 368 },
-    { product: 'Red Chilli Powder', size: '100g', qty: 140 },
-    { product: 'Red Chilli Powder', size: '200g', qty: 48 },
-    { product: 'Red Chilli Powder', size: '500g', qty: 44 },
-    { product: 'Dhaniya Powder',    size: '20g',  qty: 968 },
-    { product: 'Dhaniya Powder',    size: '50g',  qty: 460 },
-    { product: 'Dhaniya Powder',    size: '100g', qty: 232 },
-    { product: 'Dhaniya Powder',    size: '200g', qty: 136 },
-    { product: 'Dhaniya Powder',    size: '500g', qty: 48 },
+    { product: 'Turmeric Powder', size: '50g', qty: 640 },
+    { product: 'Turmeric Powder', size: '100g', qty: 80 },
+    { product: 'Turmeric Powder', size: '200g', qty: 40 },
+    { product: 'Turmeric Powder', size: '500g', qty: 48 },
+    { product: 'Red Chilli Powder', size: '50g', qty: 160 },
+    { product: 'Red Chilli Powder', size: '100g', qty: 160 },
+    { product: 'Red Chilli Powder', size: '200g', qty: 40 },
+    { product: 'Red Chilli Powder', size: '500g', qty: 80 },
+    { product: 'Dhaniya Powder', size: '50g', qty: 480 },
+    { product: 'Dhaniya Powder', size: '100g', qty: 240 },
+    { product: 'Dhaniya Powder', size: '200g', qty: 80 },
+    { product: 'Dhaniya Powder', size: '500g', qty: 32 },
+    { product: 'Ladi Pouch Pack', size: '3 ladi (450g)', qty: 100 },
   ],
 };
+
+// Bihar delivery, included in each kit price (kit price = goods + delivery).
+const KIT_DELIVERY_LABEL = 'Delivery charges (Bihar)';
+const KIT_DELIVERY = { 'Starter Kit': 1000, 'Growth Kit': 2000, 'Business Kit': 4000 };
 
 function tierPrice(product, size) {
   const row = DISTRIBUTOR_PRICE[product];
@@ -147,11 +146,13 @@ function computeKitOrder(kitName) {
     total += lineTotal;
     return { product: it.product, size: it.size, qty: it.qty, price, lineTotal };
   });
-  total = round2(total);
+  const delivery = KIT_DELIVERY[kitName] || 0;
+  if (delivery > 0) items.push({ product: KIT_DELIVERY_LABEL, size: '', qty: 1, price: delivery, lineTotal: delivery });
+  total = round2(total + delivery);
   return { items, total };
 }
 
 module.exports = {
   RETAIL_PRODUCTS, deliveryChargeForGrams, computeRetailOrder,
-  DISTRIBUTOR_PRICE, KIT_ITEMS, tierPrice, computeKitOrder,
+  DISTRIBUTOR_PRICE, KIT_ITEMS, KIT_DELIVERY, tierPrice, computeKitOrder,
 };
