@@ -271,9 +271,18 @@ const KITS = [
 function kitGoodsTotal(kit) {
   return Math.round(kit.items.reduce((sum, it) => sum + tierPrice(it.product, it.size) * it.qty, 0) * 100) / 100;
 }
-// Kit price = goods + Bihar delivery (exactly Rs 25,000 / 50,000 / 1,00,000).
-function kitTotal(kit) {
-  return Math.round((kitGoodsTotal(kit) + (kit.delivery || 0)) * 100) / 100;
+// Samastipur Town: AKK delivers by hand, so NO delivery charge (PIN codes below). Keep in sync with api/_pricing.js.
+const LOCAL_FREE_PINS = ["848101"];
+function isLocalDelivery(pin) {
+  return LOCAL_FREE_PINS.includes(String(pin || "").trim());
+}
+// Delivery included in a kit for this partner (0 in Samastipur Town).
+function kitDelivery(kit, profile) {
+  return isLocalDelivery(profile && profile.pincode) ? 0 : (kit.delivery || 0);
+}
+// Kit price = goods + Bihar delivery (exactly Rs 25,000 / 50,000 / 1,00,000); goods only in Samastipur Town.
+function kitTotal(kit, profile) {
+  return Math.round((kitGoodsTotal(kit) + kitDelivery(kit, profile)) * 100) / 100;
 }
 
 // ---------- Demo admin account (for showing the dashboard without a real

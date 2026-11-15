@@ -46,14 +46,16 @@ module.exports = async (req, res) => {
       const name = `${c.fname || ''} ${c.lname || ''}`.trim();
       if (!name || !c.phone) return res.status(400).json({ error: 'missing_customer_details' });
 
-      const computed = computeRetailOrder(items);
+      const computed = computeRetailOrder(items, { pin: c.pin, state: c.state });
       if (!computed.total || computed.total <= 0) return res.status(400).json({ error: 'invalid_amount' });
 
       const { error } = await admin.from('retail_orders').insert({
         id,
         order_ref: orderRef,
         // delivery is stored as its own line so subtotal - discount + delivery = total_amount
-        items: [...computed.lineItems, { key: 'delivery', product: 'Delivery charge (India Post)', size: computed.parcelWeightG + 'g parcel', price: computed.deliveryCharge, qty: 1, lineTotal: computed.deliveryCharge }],
+        items: computed.deliveryCharge > 0
+          ? [...computed.lineItems, { key: 'delivery', product: 'Delivery charge (India Post)', size: computed.parcelWeightG + 'g parcel', price: computed.deliveryCharge, qty: 1, lineTotal: computed.deliveryCharge }]
+          : computed.lineItems, // Samastipur Town: hand delivery, no delivery line
         subtotal: computed.subtotal,
         discount: computed.discount,
         total_amount: computed.total,
@@ -76,11 +78,11 @@ module.exports = async (req, res) => {
 
       // Confirm this is a real, approved partner before creating any order.
       const { data: partner, error: partnerErr } = await admin
-        .from('partners').select('id, status, business_name').eq('id', partner_id).single();
+        .from('partners').select('id, status, business_name, pincode').eq('id', partner_id).single();
       if (partnerErr || !partner) return res.status(400).json({ error: 'partner_not_found' });
       if (partner.status !== 'approved') return res.status(403).json({ error: 'partner_not_approved' });
 
-      const computed = computeKitOrder(kit_name);
+      const computed = computeKitOrder(kit_name, partner.pincode); // Samastipur Town: no delivery charge
 
       const { error } = await admin.from('partner_orders').insert({
         id,

@@ -37,6 +37,12 @@ const DELIVERY_SLABS = [      // [max grams, charge in rupees incl. GST]
 ];
 const DELIVERY_PER_EXTRA_KG = 107; // beyond 5 kg: each extra kg (or part) incl. GST
 
+// Samastipur Town: AKK delivers by hand, so NO delivery charge here. Add more PIN codes to extend.
+const LOCAL_FREE_PINS = ['848101'];
+function isLocalDelivery(pin) {
+  return LOCAL_FREE_PINS.includes(String(pin || '').trim());
+}
+
 function deliveryChargeForGrams(g) {
   if (!(g > 0)) return 0;
   for (const [max, fee] of DELIVERY_SLABS) if (g <= max) return fee;
@@ -47,7 +53,7 @@ function round2(n) { return Math.round(n * 100) / 100; }
 
 // items: [{ key, qty }] as sent by the browser. Throws on anything invalid
 // rather than silently clamping, so a bad request fails loudly.
-function computeRetailOrder(items) {
+function computeRetailOrder(items, location) {
   if (!Array.isArray(items) || items.length === 0) throw new Error('empty_cart');
   let subtotal = 0;
   let productGrams = 0, units = 0;
@@ -65,7 +71,8 @@ function computeRetailOrder(items) {
   subtotal = round2(subtotal);
   const discount = 0; // no discount codes / offers
   const parcelWeightG = productGrams + units * PACK_PER_UNIT_G + PACK_BOX_G;
-  const deliveryCharge = deliveryChargeForGrams(parcelWeightG); 
+  const local = isLocalDelivery(location && location.pin) && /^bihar$/i.test(String((location && location.state) || '').trim());
+  const deliveryCharge = local ? 0 : deliveryChargeForGrams(parcelWeightG); // Samastipur Town = free hand delivery
   const total = round2(subtotal - discount + deliveryCharge);
   return { lineItems, subtotal, discount, deliveryCharge, parcelWeightG, total };
 }
@@ -136,7 +143,7 @@ function tierPrice(product, size) {
   return row ? row[size] : undefined;
 }
 
-function computeKitOrder(kitName) {
+function computeKitOrder(kitName, partnerPin) {
   const spec = KIT_ITEMS[kitName];
   if (!spec) throw new Error('invalid_kit');
   let total = 0;
@@ -146,7 +153,7 @@ function computeKitOrder(kitName) {
     total += lineTotal;
     return { product: it.product, size: it.size, qty: it.qty, price, lineTotal };
   });
-  const delivery = KIT_DELIVERY[kitName] || 0;
+  const delivery = isLocalDelivery(partnerPin) ? 0 : (KIT_DELIVERY[kitName] || 0); // Samastipur Town: no delivery charge
   if (delivery > 0) items.push({ product: KIT_DELIVERY_LABEL, size: '', qty: 1, price: delivery, lineTotal: delivery });
   total = round2(total + delivery);
   return { items, total };
@@ -154,5 +161,5 @@ function computeKitOrder(kitName) {
 
 module.exports = {
   RETAIL_PRODUCTS, deliveryChargeForGrams, computeRetailOrder,
-  DISTRIBUTOR_PRICE, KIT_ITEMS, KIT_DELIVERY, tierPrice, computeKitOrder,
+  DISTRIBUTOR_PRICE, KIT_ITEMS, KIT_DELIVERY, isLocalDelivery, tierPrice, computeKitOrder,
 };

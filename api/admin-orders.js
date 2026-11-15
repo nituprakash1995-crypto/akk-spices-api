@@ -52,7 +52,20 @@ module.exports = async (req, res) => {
       .order('created_at', { ascending: false })
       .limit(300);
     if (error) throw error;
-    return res.status(200).json({ orders: data || [], signature: SIGNATURE });
+
+    // Distributor / Retailer orders, each with the partner's business + address details (for the shipping label)
+    let partnerOrders = [];
+    const po = await admin.from('partner_orders').select('*').order('created_at', { ascending: false }).limit(300);
+    if (!po.error && po.data && po.data.length) {
+      const ids = [...new Set(po.data.map((o) => o.partner_id).filter(Boolean))];
+      const pr = await admin.from('partners')
+        .select('id, business_name, contact_name, phone, partner_type, district, address_line, city, state, pincode, delivery_address')
+        .in('id', ids);
+      const byId = {};
+      (pr.data || []).forEach((p) => { byId[p.id] = p; });
+      partnerOrders = po.data.map((o) => ({ ...o, partner: byId[o.partner_id] || null }));
+    }
+    return res.status(200).json({ orders: data || [], partnerOrders, signature: SIGNATURE });
   } catch (err) {
     console.error('admin-orders error:', err);
     return res.status(500).json({ error: 'Failed to load orders' });
