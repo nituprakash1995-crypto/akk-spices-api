@@ -83,7 +83,7 @@ const DISTRIBUTOR_PRICE = {
   'Turmeric Powder':   { '50g': 15.40, '100g': 33.60, '200g': 61.75, '500g': 152.75 },
   'Red Chilli Powder': { '50g': 17.50, '100g': 47.60, '200g': 87.75, '500g': 180.70 },
   'Dhaniya Powder':    { '50g': 15.40, '100g': 32.20, '200g': 58.50, '500g': 139.75 },
-  'Ladi Pouch Pack':   { '3 ladi (480g)': 210.00 },   // 3 ladi x 10 pouch x 16g, Rs7 per pouch
+  'Ladi Pouch Pack':   { '3 ladi (450g)': 210.00 },   // 3 ladi x 10 pouch x 15g, Rs7 per pouch
 };
 
 const KIT_ITEMS = {
@@ -100,7 +100,7 @@ const KIT_ITEMS = {
     { product: 'Dhaniya Powder', size: '100g', qty: 60 },
     { product: 'Dhaniya Powder', size: '200g', qty: 20 },
     { product: 'Dhaniya Powder', size: '500g', qty: 8 },
-    { product: 'Ladi Pouch Pack', size: '3 ladi (480g)', qty: 25 },
+    { product: 'Ladi Pouch Pack', size: '3 ladi (450g)', qty: 25 },
   ],
   'Growth Kit': [
     { product: 'Turmeric Powder', size: '50g', qty: 320 },
@@ -115,7 +115,7 @@ const KIT_ITEMS = {
     { product: 'Dhaniya Powder', size: '100g', qty: 120 },
     { product: 'Dhaniya Powder', size: '200g', qty: 40 },
     { product: 'Dhaniya Powder', size: '500g', qty: 16 },
-    { product: 'Ladi Pouch Pack', size: '3 ladi (480g)', qty: 50 },
+    { product: 'Ladi Pouch Pack', size: '3 ladi (450g)', qty: 50 },
   ],
   'Business Kit': [
     { product: 'Turmeric Powder', size: '50g', qty: 640 },
@@ -130,7 +130,7 @@ const KIT_ITEMS = {
     { product: 'Dhaniya Powder', size: '100g', qty: 240 },
     { product: 'Dhaniya Powder', size: '200g', qty: 80 },
     { product: 'Dhaniya Powder', size: '500g', qty: 32 },
-    { product: 'Ladi Pouch Pack', size: '3 ladi (480g)', qty: 100 },
+    { product: 'Ladi Pouch Pack', size: '3 ladi (450g)', qty: 100 },
   ],
 };
 
@@ -153,7 +153,7 @@ function computeKitOrder(kitName, partnerPin) {
     total += lineTotal;
     return { product: it.product, size: it.size, qty: it.qty, price, lineTotal };
   });
-  const delivery = isLocalDelivery(partnerPin) ? 0 : (KIT_DELIVERY[kitName] || 0); // Samastipur Town: no delivery charge
+  const delivery = KIT_DELIVERY[kitName] || 0; // kit price is the same everywhere (Rs 25,000 / 50,000 / 1,00,000)
   if (delivery > 0) items.push({ product: KIT_DELIVERY_LABEL, size: '', qty: 1, price: delivery, lineTotal: delivery });
   total = round2(total + delivery);
   return { items, total };
