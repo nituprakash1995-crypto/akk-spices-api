@@ -86,6 +86,73 @@ const DISTRIBUTOR_PRICE = {
   'Ladi Pouch Pack':   { '3 ladi (450g)': 210.00 },   // 3 ladi x 10 pouch x 15g, Rs7 per pouch
 };
 
+
+// ---------------------------------------------------------------------------------------------
+// Distributor / Retailer custom orders (placed from the partner portal, paid by UPI)
+// Quantities are in BUNDLES (2 KG: 50g x40, 100g x20, 200g x10, 500g x4; ladi pack = 1 bundle of 3 ladi).
+// Prices per pack come from the tier's table; everything is recalculated here so the UPI amount is trusted.
+// ---------------------------------------------------------------------------------------------
+const RETAILER_PRICE = {
+  'Turmeric Powder':   { '50g': 17.60, '100g': 38.40, '200g': 76.00, '500g': 188.00 },
+  'Red Chilli Powder': { '50g': 20.00, '100g': 54.40, '200g': 108.00, '500g': 222.40 },
+  'Dhaniya Powder':    { '50g': 17.60, '100g': 36.80, '200g': 72.00, '500g': 172.00 },
+  'Ladi Pouch Pack':   { '3 ladi (450g)': 240.00 },
+};
+const BUNDLE_PACKS = { '50g': 40, '100g': 20, '200g': 10, '500g': 4 };
+const LADI_PRODUCT = 'Ladi Pouch Pack';
+const LADI_SIZE = '3 ladi (450g)';
+const LADI_GRAMS = 450;
+const HANGER_CHARGE = 25;       // optional hanger when fewer than HANGER_FREE_BUNDLES ladi bundles are ordered
+const HANGER_FREE_BUNDLES = 5;  // 5 or more ladi bundles: hanger is free
+const PARTNER_DELIVERY_LABEL = 'Delivery charges (Bihar)';
+
+function partnerTierPrice(product, size, tier) {
+  const table = tier === 'retailer' ? RETAILER_PRICE : DISTRIBUTOR_PRICE;
+  return table[product] && table[product][size];
+}
+
+// lines: [{ product, size, qty }]  (qty = bundles). Returns { items (stored in packs), total }.
+function computePartnerOrder(lines, tier, partnerPin, wantsHanger) {
+  if (!Array.isArray(lines) || lines.length === 0) throw new Error('empty_cart');
+  const items = [];
+  const seen = new Set();
+  let goods = 0, grams = 0, packsTotal = 0, ladiBundles = 0;
+  for (const l of lines) {
+    const product = l && l.product, size = l && l.size;
+    const price = partnerTierPrice(product, size, tier);
+    if (price === undefined) throw new Error('unknown_product');
+    const q = Number(l.qty);
+    if (!Number.isInteger(q) || q <= 0 || q > MAX_QTY_PER_LINE) throw new Error('invalid_qty');
+    const key = product + '|' + size;
+    if (seen.has(key)) throw new Error('invalid_qty');
+    seen.add(key);
+    const isLadi = product === LADI_PRODUCT && size === LADI_SIZE;
+    const unit = isLadi ? 1 : BUNDLE_PACKS[size];
+    if (!unit) throw new Error('unknown_product');
+    const packs = q * unit;
+    const lineTotal = round2(packs * price);
+    items.push({ product, size, qty: packs, price, lineTotal });
+    goods += lineTotal;
+    grams += packs * (isLadi ? LADI_GRAMS : parseInt(size, 10));
+    packsTotal += packs;
+    if (isLadi) ladiBundles += q;
+  }
+  let total = goods;
+  if (ladiBundles >= HANGER_FREE_BUNDLES) {
+    items.push({ product: 'Ladi Hanger', size: '1 pc', qty: 1, price: 0, lineTotal: 0 });            // free with 5+ bundles
+  } else if (ladiBundles > 0 && wantsHanger) {
+    items.push({ product: 'Ladi Hanger', size: '1 pc', qty: 1, price: HANGER_CHARGE, lineTotal: HANGER_CHARGE });
+    total += HANGER_CHARGE;
+  }
+  if (tier === 'retailer' && !isLocalDelivery(partnerPin)) {    // retailers pay India Post delivery by parcel weight; Samastipur Town is free
+    const parcelG = grams + packsTotal * PACK_PER_UNIT_G + PACK_BOX_G;
+    const fee = deliveryChargeForGrams(parcelG);
+    items.push({ product: PARTNER_DELIVERY_LABEL, size: parcelG + ' g parcel', qty: 1, price: fee, lineTotal: fee });
+    total += fee;
+  }
+  return { items, total: round2(total) };
+}
+
 const KIT_ITEMS = {
   'Starter Kit': [
     { product: 'Turmeric Powder', size: '50g', qty: 160 },
@@ -161,5 +228,5 @@ function computeKitOrder(kitName, partnerPin) {
 
 module.exports = {
   RETAIL_PRODUCTS, deliveryChargeForGrams, computeRetailOrder,
-  DISTRIBUTOR_PRICE, KIT_ITEMS, KIT_DELIVERY, isLocalDelivery, tierPrice, computeKitOrder,
+  DISTRIBUTOR_PRICE, KIT_ITEMS, KIT_DELIVERY, isLocalDelivery, tierPrice, computeKitOrder, computePartnerOrder, RETAILER_PRICE,
 };

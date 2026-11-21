@@ -16,7 +16,7 @@
 
 'use strict';
 const crypto = require('crypto');
-const { computeRetailOrder, computeKitOrder } = require('./_pricing');
+const { computeRetailOrder, computeKitOrder, computePartnerOrder } = require('./_pricing');
 const { getSupabaseAdmin } = require('./_supabase-admin');
 
 // Short reference that goes into the UPI payment note, so you can match a payment to an order.
@@ -83,6 +83,30 @@ module.exports = async (req, res) => {
       if (partner.status !== 'approved') return res.status(403).json({ error: 'partner_not_approved' });
 
       const computed = computeKitOrder(kit_name, partner.pincode); // Samastipur Town: no delivery charge
+
+      const { error } = await admin.from('partner_orders').insert({
+        id,
+        order_ref: orderRef,
+        partner_id,
+        items: computed.items,
+        total_amount: computed.total,
+        status: 'placed',
+      });
+      if (error) throw error;
+
+      return res.status(200).json({ local_order_id: id, order_ref: orderRef, computed_total: computed.total });
+    }
+
+    if (type === 'partner_order') {
+      // Distributor / Retailer custom order (quantities in bundles) — priced here, paid by UPI
+      const { partner_id, items: lines, hanger } = req.body || {};
+      if (!partner_id || !Array.isArray(lines)) return res.status(400).json({ error: 'missing_fields' });
+      const { data: partner, error: partnerErr } = await admin
+        .from('partners').select('id, status, business_name, partner_type, pincode').eq('id', partner_id).single();
+      if (partnerErr || !partner) return res.status(400).json({ error: 'partner_not_found' });
+      if (partner.status !== 'approved') return res.status(403).json({ error: 'partner_not_approved' });
+
+      const computed = computePartnerOrder(lines, partner.partner_type, partner.pincode, !!hanger);
 
       const { error } = await admin.from('partner_orders').insert({
         id,

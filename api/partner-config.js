@@ -18,7 +18,7 @@ const MRP = {
   "Turmeric Powder":  { "50g": 22, "100g": 48, "200g": 95,  "500g": 235 },
   "Red Chilli Powder":{ "50g": 25, "100g": 68, "200g": 135, "500g": 278 },
   "Dhaniya Powder":   { "50g": 22, "100g": 46, "200g": 90,  "500g": 215 },
-  "Ladi Pouch Pack":  { "3 ladi (480g)": 300 }
+  "Ladi Pouch Pack":  { "3 ladi (450g)": 300 }
 };
 
 // Retail price = MRP − 20% (Retailer's purchase/buying price, i.e. retailer margin = 20% of MRP).
@@ -26,7 +26,7 @@ const RETAIL_PRICE = {
   "Turmeric Powder":  { "50g": 17.60, "100g": 38.40,  "200g": 76.00,  "500g": 188.00 },
   "Red Chilli Powder":{ "50g": 20.00, "100g": 54.40,  "200g": 108.00, "500g": 222.40 },
   "Dhaniya Powder":   { "50g": 17.60, "100g": 36.80,  "200g": 72.00,  "500g": 172.00 },
-  "Ladi Pouch Pack":  { "3 ladi (480g)": 240 }
+  "Ladi Pouch Pack":  { "3 ladi (450g)": 240 }
 };
 
 // Distributor wholesale price per pack = MRP − 30% for 50g/100g packs,
@@ -35,7 +35,7 @@ const DISTRIBUTOR_PRICE = {
   "Turmeric Powder":  { "50g": 15.40, "100g": 33.60,  "200g": 61.75,  "500g": 152.75 },
   "Red Chilli Powder":{ "50g": 17.50, "100g": 47.60,  "200g": 87.75,  "500g": 180.70 },
   "Dhaniya Powder":   { "50g": 15.40, "100g": 32.20,  "200g": 58.50,  "500g": 139.75 },
-  "Ladi Pouch Pack":  { "3 ladi (480g)": 210 }
+  "Ladi Pouch Pack":  { "3 ladi (450g)": 210 }
 };
 
 // Two partner types: Distributor (kits + custom orders) and Retailer (custom orders only, retailer rates).
@@ -44,13 +44,13 @@ const TIER_LABEL = {
   retailer: "Retailer"
 };
 
-// ---------- Ladi pouch pack (16g pouches) ----------
-// 1 ladi = 10 pouches x 16g of ONE masala. 1 pack = 3 ladi (haldi + dhaniya + mirch, 1 ladi each)
-// = 30 pouches = 480g. Per pouch: MRP Rs10 / Retailer Rs8 / Distributor Rs7.
+// ---------- Ladi pouch pack (15g pouches) ----------
+// 1 ladi = 10 pouches x 15g of ONE masala. 1 pack (= 1 bundle) = 3 ladi (haldi + dhaniya + mirch, 1 ladi each)
+// = 30 pouches = 450g. Per pouch: MRP Rs10 / Retailer Rs8 / Distributor Rs7.
 // Hanger (to hang the ladi in the shop): FREE with 5 or more ladi packs, otherwise Rs25 once per order.
 const LADI_PRODUCT = "Ladi Pouch Pack";
-const LADI_SIZE = "3 ladi (480g)";
-const LADI_GRAMS = 480;
+const LADI_SIZE = "3 ladi (450g)";
+const LADI_GRAMS = 450;
 const HANGER_CHARGE = 25;
 const HANGER_FREE_PACKS = 5;
 
@@ -70,17 +70,19 @@ function deliveryChargeForGrams(g) {
 // ---------- Kit delivery (Bihar only for now) ----------
 const KIT_DELIVERY_LABEL = "Delivery charges (Bihar)";
 const KIT_DELIVERY_GST_RATE = 18; // % (as advised by CA); goods use GST_RATE
+const LADI_BUNDLE_PACKS = 1; // one ladi bundle = 1 pack = 3 ladi
+const PARTNER_FILES_VERSION = 8; // bump when partner-config.js / partner-portal.html change together
 const BUNDLE_PACKS = { "50g": 40, "100g": 20, "200g": 10, "500g": 4 }; // packs in one 2 KG bundle
 
 const TIER_MIN_QTY = {
-  distributor: 20,  // minimum units per order line
+  distributor: 1,   // no line minimum: even a single bundle can be ordered
   retailer: 1       // no minimum
 };
 
 // Minimum total order value (₹) required to place an order, on top of the
 // per-line minimum quantity above.
 const TIER_MIN_ORDER_VALUE = {
-  distributor: 10000,
+  distributor: 0,   // no minimum order value
   retailer: 0       // no minimum order
 };
 
@@ -121,8 +123,10 @@ function showComingSoon(stateName) {
   const old = document.getElementById("akkSoonOverlay");
   if (old) old.remove();
   const safe = String(stateName).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-  const wa = "https://wa.me/917257097766?text=" + encodeURIComponent(
-    "Hello AKK Spices, please inform me when distributor partnership opens in " + stateName + ".");
+  const hi = window.AKK_UI && window.AKK_UI.isHindi && window.AKK_UI.isHindi();
+  const wa = "https://wa.me/917257097766?text=" + encodeURIComponent(hi
+    ? "नमस्ते AKK Spices, " + stateName + " में डिस्ट्रीब्यूटर साझेदारी शुरू होने पर कृपया मुझे सूचित करें।"
+    : "Hello AKK Spices, please inform me when distributor partnership opens in " + stateName + ".");
   const o = document.createElement("div");
   o.id = "akkSoonOverlay";
   o.setAttribute("style", "position:fixed;inset:0;background:rgba(15,51,36,0.62);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;");
@@ -130,7 +134,7 @@ function showComingSoon(stateName) {
     '<div style="background:#fff;max-width:400px;width:100%;border-radius:8px 24px 8px 24px;padding:30px 26px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,0.3);">' +
       '<div style="font-size:2.6rem;line-height:1;">🌿</div>' +
       '<h2 style="margin:12px 0 8px;font-size:1.3rem;color:#0f3324;">Coming soon to ' + safe + '!</h2>' +
-      '<p style="margin:0 0 6px;font-size:0.95rem;color:#333;line-height:1.55;">Abhi AKK Spices distributor/retailer partnership sirf <b>Bihar</b> me available hai.</p>' +
+      '<p style="margin:0 0 6px;font-size:0.95rem;color:#333;line-height:1.55;">Currently, AKK Spices distributor / retailer partnership is available only in Bihar.</p>' +
       '<p style="margin:0 0 20px;font-size:0.95rem;color:#333;line-height:1.55;">We are expanding fast and will start service in your area very soon. Stay tuned!</p>' +
       '<a href="' + wa + '" target="_blank" rel="noopener" style="display:block;background:#25D366;color:#fff;text-decoration:none;padding:12px;border-radius:6px 14px 6px 14px;font-weight:700;margin-bottom:10px;">💬 Notify me on WhatsApp</a>' +
       '<button type="button" id="akkSoonClose" style="width:100%;background:#fff;border:1px solid #0f3324;color:#0f3324;padding:11px;border-radius:6px 14px 6px 14px;font-weight:700;cursor:pointer;font-size:0.95rem;">OK, Got it</button>' +
@@ -214,7 +218,7 @@ const KITS = [
       { product: "Dhaniya Powder", size: "100g", qty: 60 },
       { product: "Dhaniya Powder", size: "200g", qty: 20 },
       { product: "Dhaniya Powder", size: "500g", qty: 8 },
-      { product: "Ladi Pouch Pack", size: "3 ladi (480g)", qty: 25 }
+      { product: "Ladi Pouch Pack", size: "3 ladi (450g)", qty: 25 }
     ]
   },
   {
@@ -238,7 +242,7 @@ const KITS = [
       { product: "Dhaniya Powder", size: "100g", qty: 120 },
       { product: "Dhaniya Powder", size: "200g", qty: 40 },
       { product: "Dhaniya Powder", size: "500g", qty: 16 },
-      { product: "Ladi Pouch Pack", size: "3 ladi (480g)", qty: 50 }
+      { product: "Ladi Pouch Pack", size: "3 ladi (450g)", qty: 50 }
     ]
   },
   {
@@ -262,7 +266,7 @@ const KITS = [
       { product: "Dhaniya Powder", size: "100g", qty: 240 },
       { product: "Dhaniya Powder", size: "200g", qty: 80 },
       { product: "Dhaniya Powder", size: "500g", qty: 32 },
-      { product: "Ladi Pouch Pack", size: "3 ladi (480g)", qty: 100 }
+      { product: "Ladi Pouch Pack", size: "3 ladi (450g)", qty: 100 }
     ]
   }
 ];
@@ -276,11 +280,11 @@ const LOCAL_FREE_PINS = ["848101"];
 function isLocalDelivery(pin) {
   return LOCAL_FREE_PINS.includes(String(pin || "").trim());
 }
-// Delivery included in a kit for this partner (0 in Samastipur Town).
+// Delivery included in a kit. The kit price is the same everywhere (Rs 25,000 / 50,000 / 1,00,000).
 function kitDelivery(kit, profile) {
-  return isLocalDelivery(profile && profile.pincode) ? 0 : (kit.delivery || 0);
+  return kit.delivery || 0;
 }
-// Kit price = goods + Bihar delivery (exactly Rs 25,000 / 50,000 / 1,00,000); goods only in Samastipur Town.
+// Kit price = goods + Bihar delivery (exactly Rs 25,000 / 50,000 / 1,00,000).
 function kitTotal(kit, profile) {
   return Math.round((kitGoodsTotal(kit) + kitDelivery(kit, profile)) * 100) / 100;
 }
